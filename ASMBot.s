@@ -26,7 +26,6 @@ setup_socket:
 	jle fail
 
 	addl $16, %esp
-
 	leave
 	ret
 
@@ -42,7 +41,7 @@ setup_socket:
 connect:
 	pushl %ebp
 	movl %esp, %ebp
-	subl $32, %esp # 26 used, aligned by 16
+	subl $32, %esp # align stack by 16
 
 	# build sockaddr_in
 	movw $2, -20(%ebp) # af_inet
@@ -61,6 +60,17 @@ connect:
 
 	cmp $0, %eax
 	jne fail
+
+	addl $32, %esp
+	leave
+	ret
+
+recv:
+	pushl %ebp
+	movl %esp, %ebp
+
+	movl $102, %eax # sys_socketcall
+	movl $3, %ebx # sys_recv
 
 	leave
 	ret
