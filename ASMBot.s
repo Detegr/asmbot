@@ -1,10 +1,9 @@
-.data
-
 .text
 .global _start
 
 _start:
 	call setup_socket
+	call connect
 	movl $1, %eax
 	movl $0, %ebx
 	int $0x80
@@ -12,19 +11,45 @@ _start:
 setup_socket:
 	pushl %ebp
 	movl %esp, %ebp
-	subl $12, %esp  # socket(int,int,int)
+	subl $16, %esp  # socket(int,int,int), align stack by 16
 
-	movl $2, -4(%ebp) # af_inet
-	movl $0, -8(%ebp) # sock_dgram
-	movl $0, -12(%ebp) # protocol 0
+	movl $2, -12(%ebp) # af_inet
+	movl $1, -8(%ebp) # sock_dgram
+	movl $0, -4(%ebp) # protocol 0
 
 	movl $102, %eax # sys_socketcall
 	movl $1,   %ebx # sys_socket
-	movl -12(%ebp), %ecx
+	leal -12(%ebp), %ecx
+	int $0x80
+	
+	cmp $0, %eax
+	jle fail
+
+	addl $16, %esp
+
+	leave
+	ret
+
+connect:
+	pushl %ebp
+	movl %esp, %ebp
+
+	leave
+	ret
+
+fail:
+	pushl %eax
+	movl $4, %eax
+	movl $1, %ebx
+	movl $errmsg, %ecx
+	movl $errlen, %edx
 	int $0x80
 
-	addl $12, %esp
-	movl %ebp, %esp
-	popl %ebp
+	popl %ebx
+	movl $1, %eax
+	int $0x80
 
-	ret
+.data
+errmsg:
+	.string "Error!\n"
+	errlen = . - errmsg
