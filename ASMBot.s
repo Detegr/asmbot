@@ -4,6 +4,7 @@
 _start:
 	call setup_socket
 	call connect
+	call recv
 	movl $1, %eax
 	movl $0, %ebx
 	int $0x80
@@ -61,6 +62,8 @@ connect:
 	cmp $0, %eax
 	jne fail
 
+	movl -12(%ebp), %eax # fd
+
 	addl $32, %esp
 	leave
 	ret
@@ -68,9 +71,28 @@ connect:
 recv:
 	pushl %ebp
 	movl %esp, %ebp
+	subl $4112, %esp
+	movl %eax, -16(%ebp) # fd
+	leal -4112(%ebp), %edx # buffer ptr via edx
+	movl %edx, -12(%ebp)
+	movl $4096, -8(%ebp) # len
+	movl $0, -4(%ebp) #flags
 
 	movl $102, %eax # sys_socketcall
-	movl $3, %ebx # sys_recv
+	movl $10, %ebx # sys_recv
+	leal -16(%ebp), %ecx
+	int $0x80
+
+	cmp $0, %eax
+	jle fail
+
+	movl $4, %eax
+	movl $1, %ebx
+	leal -4112(%ebp), %ecx
+	movl $4096, %edx
+	int $0x80
+
+	addl $4112, %esp
 
 	leave
 	ret
