@@ -4,6 +4,7 @@
 _start:
 	call setup_socket
 	call connect
+	call identify
 	call recvloop
 	movl $1, %eax
 	movl $0, %ebx
@@ -68,6 +69,59 @@ connect:
 	leave
 	ret
 
+/*
+   Sends a string to a socket.
+   %eax - socket fd
+   %ebx
+   %ecx - string
+   %edx - string length
+*/
+send:
+	pushl %ebp
+	movl %esp, %ebp
+	subl $16, %esp
+
+	movl %eax, -16(%ebp)
+	movl %ecx, -12(%ebp)
+	movl %edx, -8(%ebp)
+	movl $0, -4(%ebp)
+	jmp sendagain
+sendagain:
+	movl $102, %eax # sys_socketcall
+	movl $9, %ebx # sys_send
+	leal -16(%ebp), %ecx
+	int $0x80
+
+	cmp $0, %eax
+	jle fail
+	cmp %eax, %edx
+	jl sendmore
+
+	movl -16(%ebp), %eax # restore fd
+	addl $16, %esp
+
+	leave
+	ret
+
+sendmore:
+	subl %edx, %eax
+	movl %edx, -8(%ebp)
+	jmp sendagain
+
+identify:
+	pushl %ebp
+	movl %esp, %ebp
+
+	movl $nick, %ecx
+	movl $nicklen, %edx
+	call send
+	movl $user, %ecx
+	movl $userlen, %edx
+	call send
+
+	leave
+	ret
+
 recvloop:
 	pushl %ebp
 	movl %esp, %ebp
@@ -87,15 +141,11 @@ recvagain:
 	jle fail
 
 	#print received string
+	movl %eax, %edx
 	movl $4, %eax
 	movl $1, %ebx
 	leal -4112(%ebp), %ecx
-	movl $4096, %edx
 	int $0x80
-
-	# zero the buffer
-	movl $0, %eax
-
 
 	jg recvagain
 	je done
@@ -117,6 +167,12 @@ fail:
 	int $0x80
 
 .data
+user:
+	.asciz "USER ASMBot ASMBot * :ASMBot\r\n"
+	userlen= . - user
+nick:
+	.asciz "NICK ASMBot\r\n"
+	nicklen= . - nick
 errmsg:
 	.string "Error!\n"
 	errlen = . - errmsg
