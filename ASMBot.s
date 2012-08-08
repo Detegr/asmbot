@@ -147,8 +147,8 @@ recvagain:
 	leal -4112(%ebp), %ecx
 	int $0x80
 
-	pushl %eax
-	leal -4112(%ebp), %eax
+	movl %eax, %ecx # length received
+	leal -4112(%ebp), %edi # for comparing
 	call handle_str
 
 	popl %eax
@@ -164,8 +164,24 @@ done:
 handle_str:
 	pushl %ebp
 	movl %esp, %ebp
-	call check_pingpong
+	subl $4, %esp
+	movl %ecx, -4(%esp) # store length
 
+checkstrings:
+	movl %edi, %edx
+	movl $'\n', %eax
+	repne scasb
+	leal (%edi), %ebx
+	movl $0, %ebx
+	movl %edi, %ebx
+	incl %ebx
+	movl %edx, %edi
+	call check_pingpong
+	movl %ebx, %edi
+	cmp $0, %ecx
+	jg checkstrings
+
+	addl $4, %esp
 	leave
 	ret
 
@@ -174,7 +190,6 @@ check_pingpong:
 	pushl %ebp
 	movl %esp, %ebp
 	movl $ping, %esi
-	movl %eax, %edi
 	movl $4, %ecx
 	repe cmpsb
 	je isping
