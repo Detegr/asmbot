@@ -147,12 +147,52 @@ recvagain:
 	leal -4112(%ebp), %ecx
 	int $0x80
 
+	pushl %eax
+	leal -4112(%ebp), %eax
+	call handle_str
+
+	popl %eax
+	cmp $0, %eax
 	jg recvagain
 	je done
 done:
 	addl $4112, %esp
 	leave
 	ret
+
+# Assumes buffer in %eax
+handle_str:
+	pushl %ebp
+	movl %esp, %ebp
+	call check_pingpong
+
+	leave
+	ret
+
+# Assumes buffer in %eax
+check_pingpong:
+	pushl %ebp
+	movl %esp, %ebp
+	movl $ping, %esi
+	movl %eax, %edi
+	movl $4, %ecx
+	repe cmpsb
+	je isping
+	jmp out
+out:
+	addl $4, %esp
+	leave
+	ret
+
+isping:
+	movl %eax, %ecx
+	incl %ecx
+	movl $0x4F, (%ecx)
+	movl $4, %eax
+	movl $1, %ebx
+	movl $10, %edx
+	int $0x80
+	jmp out
 
 fail:
 	pushl %eax
@@ -173,6 +213,8 @@ user:
 nick:
 	.asciz "NICK ASMBot\r\n"
 	nicklen= . - nick
+ping:
+	.asciz "PING"
 errmsg:
 	.string "Error!\n"
 	errlen = . - errmsg
