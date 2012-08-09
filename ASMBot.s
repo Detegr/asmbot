@@ -200,18 +200,34 @@ out:
 	ret
 
 isping:
-	leal -3(%edi), %edx
-	movb $'O', (%edx)
-	subl $4, %edi
-	pushl %edi
-	xorl %eax,%eax
-	movl $'\r', %al
-	repne scasb
-	leal (%edi), %ebx
-	movb $0, (%ebx)
-	popl %eax
+    call sendpong
+    jmp out 
 
-	jmp out
+sendpong:
+    pushl %ebp
+    movl %esp, %ebp
+    subl $18, %esp
+
+    movl $ping, -18(%ebp)
+    leal -3(%edi), %edx
+    movb $'O', (%edx)
+	incl %edi
+	incl %edi
+    movl %edi, %esi
+    movl -12(%ebp), %edi
+    movl $10, %ecx
+    rep movsb
+
+    mov $4, %eax
+    mov $1, %ebx
+    mov -18(%ebp), %ecx
+    mov $18, %edx
+    int $0x80
+
+    addl $18, %esp
+    leave
+    ret 
+
 
 fail:
 	pushl %eax
@@ -233,7 +249,7 @@ nick:
 	.asciz "NICK ASMBot\r\n"
 	nicklen= . - nick
 ping:
-	.asciz "PING :XXXXXXXXX"
+	.asciz "PING :XXXXXXXXXX\r\n"
 errmsg:
 	.string "Error!\n"
 	errlen = . - errmsg
