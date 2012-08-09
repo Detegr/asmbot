@@ -164,24 +164,24 @@ done:
 handle_str:
 	pushl %ebp
 	movl %esp, %ebp
-	subl $4, %esp
-	movl %ecx, -4(%esp) # store length
-
 checkstrings:
 	movl %edi, %edx
-	movl $'\n', %eax
+	xorl %eax, %eax
+	movb $'\n', %al
+	cld
 	repne scasb
-	leal (%edi), %ebx
-	movl $0, %ebx
-	movl %edi, %ebx
+	pushl %edi
+
+	leal -1(%edi), %ebx
+	movb $0, (%ebx) # replace newline with 0x0
 	incl %ebx
 	movl %edx, %edi
+	movl %ebx, %edx
 	call check_pingpong
-	movl %ebx, %edi
-	cmp $0, %ecx
+	movl %edx, %edi
+	popl %ecx
+	cmp $0, (%ecx)
 	jg checkstrings
-
-	addl $4, %esp
 	leave
 	ret
 
@@ -200,13 +200,17 @@ out:
 	ret
 
 isping:
-	movl %eax, %ecx
-	incl %ecx
-	movl $0x4F, (%ecx)
-	movl $4, %eax
-	movl $1, %ebx
-	movl $10, %edx
-	int $0x80
+	leal -3(%edi), %edx
+	movb $'O', (%edx)
+	subl $4, %edi
+	pushl %edi
+	xorl %eax,%eax
+	movl $'\r', %al
+	repne scasb
+	leal (%edi), %ebx
+	movb $0, (%ebx)
+	popl %eax
+
 	jmp out
 
 fail:
@@ -229,7 +233,7 @@ nick:
 	.asciz "NICK ASMBot\r\n"
 	nicklen= . - nick
 ping:
-	.asciz "PING"
+	.asciz "PING :XXXXXXXXX"
 errmsg:
 	.string "Error!\n"
 	errlen = . - errmsg
