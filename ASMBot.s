@@ -147,10 +147,9 @@ recvagain:
 	leal -4112(%ebp), %ecx
 	int $0x80
 
-	movl %eax, %ecx # length received
+	pushl %eax
 	leal -4112(%ebp), %edi # for comparing
 	call handle_str
-
 	popl %eax
 	cmp $0, %eax
 	jg recvagain
@@ -170,18 +169,18 @@ checkstrings:
 	movb $'\n', %al
 	cld
 	repne scasb
-	pushl %edi
+	pushl %edi # \n[c] c=0 or c=char
 
-	leal -1(%edi), %ebx
-	movb $0, (%ebx) # replace newline with 0x0
-	incl %ebx
-	movl %edx, %edi
-	movl %ebx, %edx
+	leal -1(%edi), %ebx # [\n]c
+	movb $0, (%ebx) # replace newline with 0x0 [0]c
+	incl %ebx # 0[c]
+	movl %edx, %edi # [s]tart
+	movl %ebx, %edx # 0[c]
 	call check_pingpong
-	movl %edx, %edi
 	popl %ecx
-	cmp $0, (%ecx)
-	jg checkstrings
+	leal (%ecx), %edi
+	cmp $0, (%edi)
+	jne checkstrings
 	leave
 	ret
 
@@ -195,7 +194,6 @@ check_pingpong:
 	je isping
 	jmp out
 out:
-	addl $4, %esp
 	leave
 	ret
 
