@@ -206,18 +206,18 @@ isping:
 sendpong:
     pushl %ebp
     movl %esp, %ebp
-    subl $18, %esp
+    subl $32, %esp
 
 	pushl %edi
 	movl $ping, %esi
-	leal -4130(%ebp), %edi
+	leal -4131(%ebp), %edi
 	cld
 	movl $18, %ecx
 	rep movsb
 
-    leal -4129(%ebp), %edx
+    leal -4130(%ebp), %edx
     movb $'O', (%edx)
-    leal -4124(%ebp), %edi
+    leal -4125(%ebp), %edi
 	popl %esi
 	incl %esi
 	incl %esi
@@ -226,11 +226,11 @@ sendpong:
 
     movl $4, %eax
     movl $1, %ebx
-    leal -4130(%ebp), %ecx
-    movl $18, %edx
+    leal -4131(%ebp), %ecx
+    movl $19, %edx
     int $0x80
 
-    addl $18, %esp
+    addl $32, %esp
     leave
     ret 
 
