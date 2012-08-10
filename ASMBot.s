@@ -208,14 +208,14 @@ sendpong:
 
 	pushl %edi
 	movl $ping, %esi
-	leal -18(%ebp), %edi
+	leal -19(%ebp), %edi
 	cld
-	movl $18, %ecx
+	movl $19, %ecx
 	rep movsb
 
-    leal -17(%ebp), %edx
+    leal -18(%ebp), %edx
     movb $'O', (%edx)
-    leal -12(%ebp), %edi
+    leal -13(%ebp), %edi
 	popl %esi
 	incl %esi
 	incl %esi
