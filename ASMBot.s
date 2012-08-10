@@ -208,20 +208,26 @@ sendpong:
     movl %esp, %ebp
     subl $18, %esp
 
-    movl $ping, -18(%ebp)
-    leal -3(%edi), %edx
+	pushl %edi
+	movl $ping, %esi
+	leal -4130(%ebp), %edi
+	cld
+	movl $18, %ecx
+	rep movsb
+
+    leal -4129(%ebp), %edx
     movb $'O', (%edx)
-	incl %edi
-	incl %edi
-    movl %edi, %esi
-    movl -12(%ebp), %edi
+    leal -4124(%ebp), %edi
+	popl %esi
+	incl %esi
+	incl %esi
     movl $10, %ecx
     rep movsb
 
-    mov $4, %eax
-    mov $1, %ebx
-    mov -18(%ebp), %ecx
-    mov $18, %edx
+    movl $4, %eax
+    movl $1, %ebx
+    leal -4130(%ebp), %ecx
+    movl $18, %edx
     int $0x80
 
     addl $18, %esp
