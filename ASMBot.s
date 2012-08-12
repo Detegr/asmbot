@@ -97,6 +97,12 @@ sendagain:
 	cmp %eax, %edx
 	jl sendmore
 
+	movl $4, %eax
+	movl $1, %ebx
+	movl -12(%ebp), %ecx
+	movl -8(%ebp), %edx
+	int $0x80
+
 	movl -16(%ebp), %eax # restore fd
 	addl $16, %esp
 
@@ -149,7 +155,17 @@ recvagain:
 
 	pushl %eax
 	leal -4112(%ebp), %edi # for comparing
+	movl -16(%ebp), %eax # fd
 	call handle_str
+	leal -4112(%ebp), %ebx
+	movl $4096, %ecx
+	jmp clearbuffer
+clearbuffer: # silver bullet to solve all problems :D
+	# should probably just write \0 after the received string...?
+	movb $0, (%ebx)
+	incl %ebx
+	loop clearbuffer
+
 	popl %eax
 	cmp $0, %eax
 	jg recvagain
@@ -164,6 +180,7 @@ handle_str:
 	pushl %ebp
 	movl %esp, %ebp
 checkstrings:
+	movl %eax, %ebx # fd
 	movl %edi, %edx
 	xorl %eax, %eax
 	movb $'\n', %al
@@ -171,12 +188,13 @@ checkstrings:
 	repne scasb
 	pushl %edi # \n[c] c=0 or c=char
 
+	movl %ebx, %eax
 	leal -1(%edi), %ebx # [\n]c
 	movb $0, (%ebx) # replace newline with 0x0 [0]c
 	incl %ebx # 0[c]
 	movl %edx, %edi # [s]tart
 	movl %ebx, %edx # 0[c]
-	call check_pingpong
+	call check_pingpong # fd in %eax
 	popl %ecx
 	leal (%ecx), %edi
 	cmp $0, (%edi)
@@ -191,7 +209,7 @@ check_pingpong:
 	movl $ping, %esi
 	movl $4, %ecx
 	repe cmpsb
-	je isping
+	je isping # fd in %eax
 	jmp out
 out:
 	leave
@@ -222,11 +240,9 @@ sendpong:
     movl $10, %ecx
     rep movsb
 
-    movl $4, %eax
-    movl $1, %ebx
     leal -19(%ebp), %ecx
     movl $19, %edx
-    int $0x80
+	call send
 
     addl $32, %esp
     leave
