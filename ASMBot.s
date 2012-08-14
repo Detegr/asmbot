@@ -32,13 +32,13 @@ setup_socket:
 	ret
 
 /*
-   struct sockaddr_in:
-   short sin_family (AF_INET)
-   unsigned short sin_port
-   unsigned long s_addr (inet_pton())
-   char[8] sin_zero
+	struct sockaddr_in:
+	short sin_family (AF_INET)
+	unsigned short sin_port
+	unsigned long s_addr (inet_pton())
+	char[8] sin_zero
 
-   size: 16 bytes
+	size: 16 bytes
 */
 connect:
 	pushl %ebp
@@ -70,11 +70,11 @@ connect:
 	ret
 
 /*
-   Sends a string to a socket.
-   %eax - socket fd
-   %ebx
-   %ecx - string
-   %edx - string length
+	Sends a string to a socket.
+	%eax - socket fd
+	%ebx
+	%ecx - string
+	%edx - string length
 */
 send:
 	pushl %ebp
@@ -103,7 +103,10 @@ sendagain:
 	movl -8(%ebp), %edx
 	int $0x80
 
-	movl -16(%ebp), %eax # restore fd
+	# restore registers
+	movl -16(%ebp), %eax
+	movl -12(%ebp), %ecx
+	movl -8(%ebp), %edx
 	addl $16, %esp
 
 	leave
@@ -157,14 +160,12 @@ recvagain:
 	leal -4112(%ebp), %edi # for comparing
 	movl -16(%ebp), %eax # fd
 	call handle_str
-	leal -4112(%ebp), %ebx
+
+#clear the buffer
+	leal -4112(%ebp), %edi
 	movl $4096, %ecx
-	jmp clearbuffer
-clearbuffer: # silver bullet to solve all problems :D
-	# should probably just write \0 after the received string...?
-	movb $0, (%ebx)
-	incl %ebx
-	loop clearbuffer
+	movb $0, %al
+	rep stosb
 
 	popl %eax
 	cmp $0, %eax
@@ -216,13 +217,13 @@ out:
 	ret
 
 isping:
-    call sendpong
-    jmp out 
+	call sendpong
+	jmp out 
 
 sendpong:
-    pushl %ebp
-    movl %esp, %ebp
-    subl $32, %esp
+	pushl %ebp
+	movl %esp, %ebp
+	subl $32, %esp
 
 	pushl %edi
 	movl $ping, %esi
@@ -231,22 +232,22 @@ sendpong:
 	movl $19, %ecx
 	rep movsb
 
-    leal -18(%ebp), %edx
-    movb $'O', (%edx)
-    leal -13(%ebp), %edi
+	leal -18(%ebp), %edx
+	movb $'O', (%edx)
+	leal -13(%ebp), %edi
 	popl %esi
 	incl %esi
 	incl %esi
-    movl $10, %ecx
-    rep movsb
+	movl $10, %ecx
+	rep movsb
 
-    leal -19(%ebp), %ecx
-    movl $19, %edx
+	leal -19(%ebp), %ecx
+	movl $pinglen, %edx
 	call send
 
-    addl $32, %esp
-    leave
-    ret 
+	addl $32, %esp
+	leave
+	ret 
 
 
 fail:
@@ -270,6 +271,7 @@ nick:
 	nicklen= . - nick
 ping:
 	.asciz "PING :XXXXXXXXXX\r\n"
+	pinglen = . - ping
 errmsg:
 	.string "Error!\n"
 	errlen = . - errmsg
