@@ -47,10 +47,15 @@ connect:
 
 	# build sockaddr_in
 	movw $2, -20(%ebp) # af_inet
-	movw $2842, -18(%ebp) # htons(6667) == 2842
 	movl $3568077907, -16(%ebp) # irc.quakenet.org
 
 	movl %eax, -12(%ebp) # fd
+
+	xorl %eax, %eax
+	movw (port), %ax
+	ror $8, %ax # rotate right by 8 bits to get the word to network byte order
+	movw %ax, -18(%ebp)
+
 	leal -20(%ebp), %edx # move sockaddr_in ptr via edx
 	movl %edx, -8(%ebp) # sockaddr_in ptr
 	movl $16, -4(%ebp) # addrlen
@@ -263,6 +268,8 @@ fail:
 	int $0x80
 
 .data
+port:
+	.int 6667
 user:
 	.asciz "USER ASMBot ASMBot * :ASMBot\r\n"
 	userlen= . - user
