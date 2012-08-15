@@ -47,9 +47,9 @@ connect:
 
 	# build sockaddr_in
 	movw $2, -20(%ebp) # af_inet
-	movl $3568077907, -16(%ebp) # irc.quakenet.org
-
 	movl %eax, -12(%ebp) # fd
+	movl (ip), %eax
+	movl %eax, -16(%ebp)
 
 	xorl %eax, %eax
 	movw (port), %ax
@@ -266,6 +266,8 @@ fail:
 	int $0x80
 
 .data
+ip:
+	.byte 83,140,172,212 # irc.quakenet.org
 port:
 	.int 6667
 user:
