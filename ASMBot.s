@@ -98,7 +98,7 @@ sendagain:
 	int $0x80
 
 	cmp $0, %eax
-	jle fail
+	jl fail
 	cmp %eax, %edx
 	jl sendmore
 
@@ -232,21 +232,19 @@ sendpong:
 
 	pushl %edi
 	movl $ping, %esi
-	leal -19(%ebp), %edi
-	cld
-	movl $19, %ecx
+	movl $pinglen, %ecx
+	leal -32(%ebp), %edi
 	rep movsb
 
-	leal -18(%ebp), %edx
+	leal -31(%ebp), %edx
 	movb $'O', (%edx)
-	leal -13(%ebp), %edi
+	leal -26(%ebp), %edi
 	popl %esi
-	incl %esi
-	incl %esi
+	addl $2, %esi
 	movl $10, %ecx
 	rep movsb
 
-	leal -19(%ebp), %ecx
+	leal -32(%ebp), %ecx
 	movl $pinglen, %edx
 	call send
 
