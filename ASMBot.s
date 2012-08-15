@@ -269,14 +269,14 @@ fail:
 port:
 	.int 6667
 user:
-	.asciz "USER ASMBot ASMBot * :ASMBot\r\n"
+	.ascii "USER ASMBot 0 * :ASMBot\r\n"
 	userlen= . - user
 nick:
-	.asciz "NICK ASMBot\r\n"
+	.ascii "NICK ASMBot\r\n"
 	nicklen= . - nick
 ping:
-	.asciz "PING :XXXXXXXXXX\r\n"
+	.ascii "PING :XXXXXXXXXX\r\n"
 	pinglen = . - ping
 errmsg:
-	.string "Error!\n"
+	.asciz "Error!\n"
 	errlen = . - errmsg
